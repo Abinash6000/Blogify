@@ -17,20 +17,40 @@ class PostViewModel : ViewModel() {
     private val httpClient = KtorClient.httpClient
     private val postService: PostService = PostServiceImpl(httpClient)
 
+    private var currentPage = 1
+    private val perPage = 10
+    private var isLoadingMore = false
+    private var isLastPage = false
+
     private val _posts = MutableStateFlow<UiState<List<Post>>>(UiState.Loading)
     val posts: StateFlow<UiState<List<Post>>> = _posts
+
+    private val loadedPosts = mutableListOf<Post>()
 
     init {
         loadPosts()
     }
 
-    private fun loadPosts() {
+    fun loadPosts() {
+        // Prevent duplicate loads
+        if (isLoadingMore || isLastPage) return
+
+        isLoadingMore = true
         viewModelScope.launch {
             try {
-                val result = postService.fetchPosts()
-                _posts.value = UiState.Success(result)
+                val result = postService.fetchPosts(page = currentPage, perPage = perPage)
+                if (result.isNotEmpty()) {
+                    loadedPosts.addAll(result)
+                    _posts.value = UiState.Success(loadedPosts.toList())
+                    currentPage++
+                } else {
+                    isLastPage = true
+                }
             } catch (e: Exception) {
-                _posts.value = UiState.Error("Failed to load posts: ${e.localizedMessage}")
+                _posts.value = UiState.Error("Please check your internet connection and try again")
+                Log.d("error", e.localizedMessage ?: "error")
+            } finally {
+                isLoadingMore = false
             }
         }
     }

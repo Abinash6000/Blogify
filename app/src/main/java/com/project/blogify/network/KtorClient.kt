@@ -22,16 +22,12 @@ object KtorClient {
 }
 
 interface PostService {
-    suspend fun fetchPosts(): List<Post>
+    suspend fun fetchPosts(page: Int, perPage: Int): List<Post>
 }
 
 class PostServiceImpl(private val client: HttpClient) : PostService {
 
-    override suspend fun fetchPosts(): List<Post> {
-        return client.get("https://blog.vrid.in/wp-json/wp/v2/posts?per_page=10&page=1").body()
+    override suspend fun fetchPosts(page: Int, perPage: Int): List<Post> {
+        return client.get("https://blog.vrid.in/wp-json/wp/v2/posts?per_page=$perPage&page=$page").body()
     }
-
-//    override suspend fun fetchAuthorDetails(authorId: Long): List<Author> {
-//        return client.get("https://blog.vrid.in/wp-json/wp/v2/users/$authorId").body()
-//    }
 }

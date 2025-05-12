@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -16,8 +17,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,11 +36,6 @@ fun HomeScreen(
     navigateToDetail: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val viewModel = remember {
-        PostViewModel()
-    }
-    val uiState = viewModel.posts.collectAsState().value
-
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -48,6 +46,23 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
+
+        val viewModel = remember {
+            PostViewModel()
+        }
+        val uiState = viewModel.posts.collectAsState().value
+        val listState = rememberLazyListState()
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+                .collect { lastVisibleItemIndex ->
+                    val totalItems = listState.layoutInfo.totalItemsCount
+                    if (lastVisibleItemIndex != null && lastVisibleItemIndex >= totalItems - 3) {
+                        viewModel.loadPosts()
+                    }
+                }
+        }
+
         when (uiState) {
             is UiState.Loading -> {
                 Column(
@@ -68,7 +83,8 @@ fun HomeScreen(
                         .padding(paddingValues)
                         .padding(8.dp),
                     verticalArrangement = Arrangement.Top,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    state = listState
                 ) {
                     items(uiState.data) { post ->
                         PostItem(
@@ -79,6 +95,9 @@ fun HomeScreen(
                             mediaUrl = post.jetpack_featured_media_url,
                             modifier = Modifier.padding(8.dp)
                         )
+                    }
+                    item {
+                        CircularProgressIndicator(Modifier.padding(16.dp))
                     }
                 }
             }

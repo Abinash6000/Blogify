@@ -1,5 +1,6 @@
 package com.project.blogify.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -22,16 +23,17 @@ fun BlogifyNavHost(
         composable(route = NavigationScreen.Home.route) {
             HomeScreen(
                 navigateToDetail = { url ->
-                    navController.navigate(NavigationScreen.Detail.passWebUrl(url))
+                    val encodedUrl = Uri.encode(url)
+                    navController.navigate(NavigationScreen.Detail.passWebUrl(encodedUrl))
                 }
             )
         }
 
         composable(route = NavigationScreen.Detail.route) { backStackEntry ->
-            val webUrl = backStackEntry.arguments?.getString("url")
+            val webUrl = Uri.decode(backStackEntry.arguments?.getString("url"))
             DetailsScreen(
                 url = webUrl ?: "",
-                modifier = modifier
+                onBackClick = { navController.navigateUp() }
             )
         }
     }
