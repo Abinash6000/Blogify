@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Blogify</string>
+    <string name="media_description">Blog Image</string>
 </resources>

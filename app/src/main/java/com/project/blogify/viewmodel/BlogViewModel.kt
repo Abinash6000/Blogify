@@ -7,24 +7,36 @@ import com.project.blogify.model.Post
 import com.project.blogify.network.KtorClient
 import com.project.blogify.network.PostService
 import com.project.blogify.network.PostServiceImpl
+import com.project.blogify.ui.state.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class BlogViewModel : ViewModel() {
+
+class PostViewModel : ViewModel() {
     private val httpClient = KtorClient.httpClient
     private val postService: PostService = PostServiceImpl(httpClient)
 
-    private val _posts = MutableStateFlow<List<Post>>(emptyList())
-    val posts: StateFlow<List<Post>> = _posts
+    private val _posts = MutableStateFlow<UiState<List<Post>>>(UiState.Loading)
+    val posts: StateFlow<UiState<List<Post>>> = _posts
 
     init {
+        loadPosts()
+    }
+
+    private fun loadPosts() {
         viewModelScope.launch {
             try {
-                _posts.value = postService.fetchPosts()
+                val result = postService.fetchPosts()
+                _posts.value = UiState.Success(result)
             } catch (e: Exception) {
-                Log.d("abcdef", e.toString())
+                _posts.value = UiState.Error("Failed to load posts: ${e.localizedMessage}")
             }
         }
+    }
+
+    fun reload() {
+        _posts.value = UiState.Loading
+        loadPosts()
     }
 }

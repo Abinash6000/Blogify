@@ -8,5 +8,5 @@ import com.project.blogify.navigation.BlogifyNavHost
 @Composable
 fun BlogifyApp(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
-    BlogifyNavHost(navController = navController, modifier = modifier)
+    BlogifyNavHost(navController = navController, modifier = Modifier)
 }
